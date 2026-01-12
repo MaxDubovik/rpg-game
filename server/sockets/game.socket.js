@@ -29,5 +29,16 @@ module.exports = (io) => {
             game.removePlayer(socket.id);
             io.emit('state:update', game.getState());
         });
+
+        socket.on('player:attack', (enemyId) => {
+            const result = game.attackEnemy(socket.id, enemyId);
+
+            if (!result.ok) {
+                socket.emit('action:error', result.error);
+            }
+
+            socket.emit('battle:log', result.log);
+            io.emit('state:update', result.state);
+        });
     });
 };

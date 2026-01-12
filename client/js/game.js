@@ -2,7 +2,7 @@ const socket = io();
 
 const playerDiv = document.getElementById('player');
 const actionsDiv = document.getElementById('actions');
-const log = document.getElementById('log');
+const logDiv = document.getElementById('log');
 
 const othersDiv = document.getElementById('others');
 
@@ -22,6 +22,10 @@ socket.on('init', (data) => {
 socket.on('state:update', (state) => {
     allPlayers = state.players;
 
+    locations = Object.fromEntries(
+        state.locations.map(l => [l.id, l])
+    );
+
     const me = state.players.find(p => p.id === currentPlayer.id);
     if (me) currentPlayer = me;
 
@@ -30,6 +34,10 @@ socket.on('state:update', (state) => {
 
 socket.on('action:error', (msg) => {
     log.textContent = msg;
+});
+
+socket.on('battle:log', (lines) => {
+    logDiv.textContent = lines.join('\n');
 });
 
 function render() {
@@ -58,4 +66,18 @@ function render() {
     othersDiv.innerHTML = others.length
         ? `<strong>Others here:</strong><br>${others.map(p => p.name).join('<br>')}`
         : '';
+
+    if (location.enemies.length) {
+        const enemiesBlock = document.createElement('div');
+        enemiesBlock.innerHTML = '<strong>Enemies:</strong><br>';
+
+        location.enemies.forEach(enemy => {
+            const btn = document.createElement('button');
+            btn.textContent = `${enemy.name} (${enemy.hp}/${enemy.maxHp})`;
+            btn.onclick = () => socket.emit('player:attack', enemy.id);
+            enemiesBlock.appendChild(btn);
+        });
+
+        actionsDiv.appendChild(enemiesBlock);
+    }
 }
