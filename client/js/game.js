@@ -43,6 +43,8 @@ socket.on('battle:log', (lines) => {
 function render() {
     if (!currentPlayer) return;
 
+    console.log('start game');
+
     const location = locations[currentPlayer.location];
 
     playerDiv.innerHTML = `
