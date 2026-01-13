@@ -53,7 +53,7 @@ class GameEngine {
         const enemy = location.enemies.find(e => e.id === enemyId && !e.isDead());
         if (!enemy) return { ok: false, error: 'enemy not found' };
 
-        const playerDamage = 10;
+        const playerDamage = player.attack;
         enemy.takeDamage(playerDamage);
 
         let log = [`You hit ${enemy.name} for ${playerDamage}`];
@@ -64,8 +64,12 @@ class GameEngine {
         }
 
         if (enemy.isDead()) {
-            player.exp += enemy.exp;
-            log.push(`${enemy.name} is defeated! +${enemy.exp} exp`);
+            const leveledUp = player.gainExp(enemy.exp);
+            log.push(`${enemy.name} is defead! +${enemy.exp} exp`);
+
+            if (leveledUp) {
+                log.push(`🎉 Level up! You are now level ${player.level}`);
+            }
 
             if (location.enemies.every(e => e.isDead())) {
                 location.respawnEnemies();

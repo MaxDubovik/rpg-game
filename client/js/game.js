@@ -43,13 +43,14 @@ socket.on('battle:log', (lines) => {
 function render() {
     if (!currentPlayer) return;
 
-    console.log('start game');
-
     const location = locations[currentPlayer.location];
 
     playerDiv.innerHTML = `
         <strong>${currentPlayer.name}</strong><br>
-        HP: ${currentPlayer.hp}<br>
+        Level: ${currentPlayer.level}<br>
+        EXP: ${currentPlayer.exp} / ${currentPlayer.expToNextLevel}<br>
+        HP: ${currentPlayer.hp} / ${currentPlayer.maxHp}<br>
+        ATK: ${currentPlayer.attack}<br>
         Location: ${location.name}
     `;
 
