@@ -13,7 +13,7 @@ const locations = {
                 id: 'wolf',
                 name: 'Wolf',
                 hp: 30,
-                attack: 5,
+                attack: 10,
                 exp: 10
             })
         ]
@@ -28,7 +28,7 @@ const locations = {
                 id: 'goblin',
                 name: 'Goblin',
                 hp: 50,
-                attack: 8,
+                attack: 20,
                 exp: 20
             })
         ]

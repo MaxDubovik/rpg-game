@@ -40,5 +40,13 @@ module.exports = (io) => {
             socket.emit('battle:log', result.log);
             io.emit('state:update', result.state);
         });
+
+        socket.on('player:respawn', () => {
+            const player = game.getPlayer(socket.id);
+            if (!player || !player.isDead) return;
+
+            player.respawn();
+            io.emit('state:update', game.getState());
+        });
     });
 };

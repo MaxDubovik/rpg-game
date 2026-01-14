@@ -12,6 +12,7 @@ class Player {
 
         this.attack = 10;
         this.location = 'village';
+        this.isDead = false;
     }
 
     gainExp(amount) {
@@ -38,6 +39,22 @@ class Player {
         this.attack += 5;
     }
 
+    takeDamage(amount) {
+        this.hp -= amount;
+
+        if (this.hp <= 0) {
+            this.hp = 0;
+            this.isDead = true;
+        }
+    }
+
+    respawn() {
+        this.hp = this.maxHp;
+        this.isDead = false;
+        this.location = 'village';
+        this.exp = Math.floor(this.exp * 0.5);
+    }
+
     toJSON() {
         return {
             id: this.id,
@@ -49,6 +66,7 @@ class Player {
             maxHp: this.maxHp,
             attack: this.attack,
             location: this.location,
+            isDead: this.isDead,
         };
     }
 }

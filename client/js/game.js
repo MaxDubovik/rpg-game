@@ -42,9 +42,24 @@ socket.on('battle:log', (lines) => {
 });
 
 function render() {
+
     if (!currentPlayer) return;
 
     const location = locations[currentPlayer.location];
+
+    if (currentPlayer.isDead) {
+        actionsDiv.innerHTML = `
+            <div class="text-center space-y-3">
+            <div class="text-red-500 text-xl font-bold">You are dead</div>
+            <button
+                class="px-4 py-2 rounded bg-green-600 hover:bg-green-500 transition"
+                onclick="respawn()">
+                Respawn
+            </button>
+            </div>
+        `;
+        return;
+    }
 
     playerDiv.innerHTML = `
         <div class="space-y-2">
@@ -72,7 +87,6 @@ function render() {
         </div>
         `;
 
-
     actionsDiv.innerHTML = `
         <div class="font-semibold mb-2">Move to:</div>
       `;
@@ -98,7 +112,7 @@ function render() {
             const enemiesBlock = document.createElement('div');
             enemiesBlock.className = 'pt-4 space-y-2';
             enemiesBlock.innerHTML = '<div class="font-semibold">Enemies:</div>';
-          
+            
             location.enemies.forEach(enemy => {
                 const wrapper = document.createElement('div');
                 wrapper.className =
@@ -115,7 +129,7 @@ function render() {
                     </div>
                 </div>
                 `;
-          
+            
                 const btn = document.createElement('button');
                 btn.className =
                 'px-3 py-1 rounded bg-red-600 hover:bg-red-500 transition';
@@ -125,8 +139,13 @@ function render() {
                 wrapper.appendChild(btn);
                 enemiesBlock.appendChild(wrapper);
             });
-          
+            
             actionsDiv.appendChild(enemiesBlock);
         }
           
 }
+
+function respawn() {
+    socket.emit('player:respawn');
+}
+  

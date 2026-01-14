@@ -59,7 +59,8 @@ class GameEngine {
         let log = [`You hit ${enemy.name} for ${playerDamage}`];
 
         if (!enemy.isDead()) {
-            player.hp = Math.max(0, player.hp - enemy.attack);
+            player.takeDamage(enemy.attack);
+            // player.hp = Math.max(0, player.hp - enemy.attack);
             log.push(`${enemy.name} hits you for ${enemy.attack}`);
         }
 
@@ -75,6 +76,10 @@ class GameEngine {
                 location.respawnEnemies();
                 log.push('Enemies respawned');
             }
+        }
+
+        if (player.isDead) {
+            log.push('💀 You died');
         }
 
         return {
