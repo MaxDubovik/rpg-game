@@ -3,109 +3,118 @@ import { currentPlayer, locations, allPlayers } from './state.js';
 
 const playerDiv = document.getElementById('player');
 const actionsDiv = document.getElementById('actions');
-
 const othersDiv = document.getElementById('others');
 
 export function render() {
-
     if (!currentPlayer) return;
 
     const location = locations[currentPlayer.location];
+    if (!location) return;
+
+    const hpPercent = (currentPlayer.hp / currentPlayer.maxHp) * 100;
+    const expPercent = (currentPlayer.exp / currentPlayer.expToNextLevel) * 100;
+
+    playerDiv.innerHTML = `
+        <div class="section-title">Character</div>
+        <div class="player-head">
+            <div class="player-name">${currentPlayer.name}</div>
+            <div class="chip">Level ${currentPlayer.level}</div>
+        </div>
+        <div class="progress">
+            <div class="progress-fill hp" style="width: ${hpPercent}%"></div>
+        </div>
+        <div class="progress">
+            <div class="progress-fill exp" style="width: ${expPercent}%"></div>
+        </div>
+        <div class="stat-line">
+            HP ${currentPlayer.hp}/${currentPlayer.maxHp} · EXP ${currentPlayer.exp}/${currentPlayer.expToNextLevel} · ATK ${currentPlayer.attack}
+        </div>
+        <div class="current-place">Location: <strong>${location.name}</strong></div>
+    `;
 
     if (currentPlayer.isDead) {
         actionsDiv.innerHTML = `
-            <div class="text-center space-y-3">
-            <div class="text-red-500 text-xl font-bold">You are dead</div>
-            <button
-                class="px-4 py-2 rounded bg-green-600 hover:bg-green-500 transition"
-                onclick="respawn()">
-                Respawn
-            </button>
+            <div class="section-title">Action</div>
+            <div class="dead-wrap">
+                <div class="dead-title">You are dead</div>
+                <button class="btn btn-ghost" onclick="respawn()">
+                    Respawn at Village
+                </button>
+                <p class="hint">Half of your EXP is lost on death.</p>
             </div>
+        `;
+        othersDiv.innerHTML = `
+            <div class="section-title">Players Nearby</div>
+            <p>You cannot interact until respawn.</p>
         `;
         return;
     }
 
-    playerDiv.innerHTML = `
-        <div class="space-y-2">
-            <div class="flex justify-between">
-            <span class="font-bold">${currentPlayer.name}</span>
-            <span class="text-sm text-gray-400">Lv ${currentPlayer.level}</span>
-            </div>
-
-            <div class="w-full bg-gray-700 rounded-full h-3">
-            <div
-                class="bg-red-600 h-3 rounded-full transition-all"
-                style="width: ${(currentPlayer.hp / currentPlayer.maxHp) * 100}%">
-            </div>
-            </div>
-
-            <div class="text-sm text-gray-400">
-            HP ${currentPlayer.hp} / ${currentPlayer.maxHp} ·
-            EXP ${currentPlayer.exp} / ${currentPlayer.expToNextLevel} ·
-            ATK ${currentPlayer.attack}
-            </div>
-
-            <div class="text-sm">
-            Location: <span class="font-semibold">${location.name}</span>
-            </div>
-        </div>
-        `;
-
     actionsDiv.innerHTML = `
-        <div class="font-semibold mb-2">Move to:</div>
-      `;
+        <div class="section-title">Move</div>
+        <div class="move-buttons"></div>
+    `;
 
-    location.exits.forEach(exit => {
+    const moveButtonsDiv = actionsDiv.querySelector('.move-buttons');
+    location.exits.forEach((exit) => {
+        const nextLocation = locations[exit];
+        if (!nextLocation) return;
+
         const btn = document.createElement('button');
-        btn.className =
-            'px-3 py-1 me-2 rounded-lg bg-blue-600 hover:bg-blue-500 transition';
-        btn.textContent = locations[exit].name;
+        btn.className = 'btn';
+        btn.textContent = nextLocation.name;
         btn.onclick = () => socket.emit('player:move', exit);
-        actionsDiv.appendChild(btn);
+        moveButtonsDiv.appendChild(btn);
     });
 
+    if (location.enemies.length) {
+        const enemiesSection = document.createElement('div');
+        enemiesSection.className = 'enemy-grid';
+        enemiesSection.innerHTML = `<div class="section-title">Enemies</div>`;
+
+        location.enemies.forEach((enemy) => {
+            const wrapper = document.createElement('div');
+            const enemyHpPercent = (enemy.hp / enemy.maxHp) * 100;
+
+            wrapper.className = 'enemy-card';
+            wrapper.innerHTML = `
+                <div>
+                    <p class="enemy-name">${enemy.name}</p>
+                    <div class="progress">
+                        <div class="progress-fill hp" style="width: ${enemyHpPercent}%"></div>
+                    </div>
+                    <div class="enemy-hp">HP ${enemy.hp}/${enemy.maxHp}</div>
+                </div>
+            `;
+
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-danger';
+            btn.textContent = 'Attack';
+            btn.onclick = () => socket.emit('player:attack', enemy.id);
+
+            wrapper.appendChild(btn);
+            enemiesSection.appendChild(wrapper);
+        });
+
+        actionsDiv.appendChild(enemiesSection);
+    }
+
     const others = allPlayers.filter(
-        p => p.id !== currentPlayer.id && p.location === currentPlayer.location
+        (p) => p.id !== currentPlayer.id && p.location === currentPlayer.location
     );
 
-    othersDiv.innerHTML = others.length
-        ? `<strong>Others here:</strong><br>${others.map(p => p.name).join('<br>')}`
-        : '';
+    if (!others.length) {
+        othersDiv.innerHTML = `
+            <div class="section-title">Players Nearby</div>
+            <p>No one else is here yet.</p>
+        `;
+        return;
+    }
 
-        if (location.enemies.length) {
-            const enemiesBlock = document.createElement('div');
-            enemiesBlock.className = 'pt-4 space-y-2';
-            enemiesBlock.innerHTML = '<div class="font-semibold">Enemies:</div>';
-            
-            location.enemies.forEach(enemy => {
-                const wrapper = document.createElement('div');
-                wrapper.className =
-                'flex items-center justify-between bg-gray-700 rounded-lg p-2';
-            
-                wrapper.innerHTML = `
-                <div>
-                    <div>${enemy.name}</div>
-                    <div class="w-32 bg-gray-600 rounded-full h-2 mt-1">
-                    <div
-                        class="bg-red-500 h-2 rounded-full"
-                        style="width: ${(enemy.hp / enemy.maxHp) * 100}%">
-                    </div>
-                    </div>
-                </div>
-                `;
-            
-                const btn = document.createElement('button');
-                btn.className =
-                'px-3 py-1 rounded bg-red-600 hover:bg-red-500 transition';
-                btn.textContent = 'Attack';
-                btn.onclick = () => socket.emit('player:attack', enemy.id);
-            
-                wrapper.appendChild(btn);
-                enemiesBlock.appendChild(wrapper);
-            });
-            
-            actionsDiv.appendChild(enemiesBlock);
-        }
-          
+    othersDiv.innerHTML = `
+        <div class="section-title">Players Nearby</div>
+        <div class="player-tags">
+            ${others.map((p) => `<span class="player-tag">${p.name}</span>`).join('')}
+        </div>
+    `;
 }
